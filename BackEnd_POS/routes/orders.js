@@ -1,6 +1,6 @@
 import express from 'express';
 import orderControll from '../orderControll.js'; 
-
+import Order from '../models/orderModel.js';
 const router = express.Router();
 router.post('/api/receipts' , async (req, res) => {
     try {
@@ -10,10 +10,11 @@ router.post('/api/receipts' , async (req, res) => {
             return res.status(404).json({message: "No items to print receipt"})
         }
 
-        console.log("Receipt Data: " , req.body)
-        await orderControll.printReceipt(req.body);
+        
+        // await orderControll.printReceipt(req.body);
         res.status(200).json({message: "Receipt printed successfully"})
-
+        const order = await Order.create(req.body)
+        console.log("Order created " , order)
 
     } catch (error) {
         console.error("Error printing receipt: ", error);
