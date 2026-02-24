@@ -3,6 +3,7 @@ const usb = require('usb');
 if (!usb.getDeviceList) { Object.assign(usb, usb.usb); } 
 
 const escpos = require('escpos');
+const { default: sortItems } = require('./utils/sortItems');
 escpos.USB = require('escpos-usb');
 
 const app = express();
@@ -16,10 +17,7 @@ app.post('/print', (req, res) => {
     const LINE = '-'.repeat(32);
 
     // helper: right align text
-    const right = (label, value) => {
-        const space = 32 - (label.length + value.length);
-        return label + ' '.repeat(space > 0 ? space : 1) + value;
-    };
+    
 
     // ==== CALCULATIONS ====
     const subtotal = data.items.reduce((sum, item) => sum + item.total, 0);
@@ -59,27 +57,37 @@ app.post('/print', (req, res) => {
 
         // ===== ITEMS =====
             
-            data.items.forEach(item => {
-            // Item Name
-            printer.style('b').text(item.name + (item.size ? ` (${item.size[0]})` : ''));
-            printer.style('normal');
+            // Sort items so items starting with "COF" come first
+   // Helper function to align text right
+function right(leftText, rightText, width = 40) {
+    const space = width - leftText.length - rightText.length;
+    return leftText + ' '.repeat(space > 0 ? space : 1) + rightText;
+  }
+  
+  // Sort items: COF first, then others
 
-            // Customizations
-            const mods = Object.values(item.customizations || {});
-            if (mods.length) {
-                printer.text('  ' + mods.join(' - '));
-            }
-
-            // Qty x Price = Total
-            const calc = `${item.qty} x ${item.price}`;
-            const totalItem = item.total.toFixed(0);
-
-            printer.text(right(calc, totalItem));
-        });
+  const sortedItems = sortItems(data.items, "COF" , "productId")
+  console.log(sortedItems)
+  
+  sortedItems.forEach(item => {
+    printer.style('b').text(item.name + (item.size ? ` (${item.size})` : ''));
+    printer.style('normal');
+  
+    // Customizations
+    const mods = Object.values(item.customizations || {});
+    if (mods.length) {
+      printer.text('  ' + mods.join(' - '));
+    }
+  
+    // Qty x Price = Total
+    const calc = `${item.qty} x ${item.price}`;
+    const totalItem = item.total.toFixed(0);
+  
+    printer.text(right(calc, totalItem));
+  });
 
         // ===== TOTALS =====
         printer
-            .text(LINE).align('CT')
             .text(right('Subtotal', subtotal.toFixed(2)))
             .text(right('Tax (12%)', tax.toFixed(2)))
             .feed(1)
@@ -88,8 +96,8 @@ app.post('/print', (req, res) => {
             .style('normal')
             .text(`Paid via ${data.paymentMethod || 'Cash'}`)
             .feed(1)
+            .align('CT')
             .text(LINE)
-            .align('ct')
             .text('Enjoy your coffee')
             .feed(1)
             .cut()
