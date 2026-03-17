@@ -29,6 +29,7 @@
     
     # Next.js will listen on this port
     EXPOSE 4000
-    
+    RUN corepack enable
+
     # Start Next.js on port 4000
-    CMD ["pnpm", "start", "--", "-p", "4000"]
+    CMD ["pnpm", "start", "-p", "4000"]
