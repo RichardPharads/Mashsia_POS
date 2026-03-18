@@ -1,4 +1,3 @@
-# Docker compose (placeholder)
 services:
   postgres:
     image: postgres:16-alpine
@@ -50,7 +49,7 @@ services:
     environment:
       API_URL: http://api:3000
     ports:
-    - "4000:4000"
+      - "4000:4000"
 
   ollama:
     image: ollama/ollama:latest
@@ -60,23 +59,19 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-
-    healthcheck: # Required for the loader to wait
-      # Use the ollama CLI (present in the image) instead of curl.
+    healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 5
+
   model-loader:
     image: curlimages/curl:latest
     depends_on:
       ollama:
         condition: service_healthy
-    # Sends a pull request to the ollama service
     entrypoint: >
       sh -c "curl -X POST http://ollama:11434/api/pull -d '{\"name\": \"llama3.2\"}'"
-
-
 
   chromadb:
     image: chromadb/chroma:latest
