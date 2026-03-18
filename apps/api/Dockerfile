@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 FROM node:20-alpine AS base
 
 WORKDIR /app
@@ -16,3 +17,18 @@ EXPOSE 3000
 
 # Placeholder command – replace with "pnpm start" or "node dist/server.js" once implemented
 CMD ["node", "server.js"]
+=======
+# ---------- Base image ----------
+FROM node:20-alpine AS base
+
+RUN corepack enable
+WORKDIR /app
+
+COPY package.json ./
+RUN pnpm install
+
+COPY . .
+
+EXPOSE 3000
+CMD ["pnpm", "start"]
+>>>>>>> 39748a9 (API seed updates)
