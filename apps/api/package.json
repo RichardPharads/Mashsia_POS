@@ -4,13 +4,16 @@
   "main": "server.ts",
   "scripts": {
     "dev": "node server.ts",
-    "start": "node server.ts"
+    "start": "node server.ts",
+    "prebuild": "if exist dist rmdir /s /q dist",
+    "build": "tsc"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "sharp",
       "unrs-resolver"
-    ]},
+    ]
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,5 +23,12 @@
     "drizzle-orm": "^0.45.1",
     "fastify": "^5.8.2",
     "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^25.5.0",
+    "@types/pg": "^8.18.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
