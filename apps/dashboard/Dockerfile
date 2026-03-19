@@ -23,13 +23,13 @@
     
     WORKDIR /app
     ENV NODE_ENV=production
-    
     # Copy built app
     COPY --from=builder /app ./
     
     # Next.js will listen on this port
     EXPOSE 4000
     RUN corepack enable
+    ENV HOSTNAME="0.0.0.0"
 
     # Start Next.js on port 4000
     CMD ["pnpm", "start", "-p", "4000"]
