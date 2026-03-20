@@ -1,19 +1,24 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
-import * as schema from './schema/'
+// apps/api/src/db/client.ts
+import { drizzle }   from 'drizzle-orm/node-postgres'
+import { Pool }      from 'pg'
+import * as dotenv   from 'dotenv'
+import * as schema   from './schema'
 
-// ── Main connection pool (read + write) ────────────────────────────────────
+// Load .env file — must be before Pool creation
+dotenv.config()
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set in .env file')
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,              // max connections in pool
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionString: process.env.DATABASE_URL 
+    ?? 'postgres://pos:pospassword@localhost:5432/posdb',
 })
 
 export const db = drizzle(pool, { schema })
 
-// ── Read-only pool for AI text-to-SQL queries ──────────────────────────────
-// This user has only SELECT privileges — safe for AI-generated queries
+// Read-only pool for AI text-to-SQL
 const readOnlyPool = new Pool({
   connectionString: process.env.AI_DATABASE_URL ?? process.env.DATABASE_URL,
   max: 5,
@@ -21,7 +26,6 @@ const readOnlyPool = new Pool({
 
 export const dbReadOnly = drizzle(readOnlyPool, { schema })
 
-// ── Health check ───────────────────────────────────────────────────────────
 export async function checkDatabaseConnection(): Promise<boolean> {
   try {
     const client = await pool.connect()
