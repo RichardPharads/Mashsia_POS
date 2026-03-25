@@ -1,0 +1,89 @@
+version: "3.9"
+# Example Prod, Later can changed during deployment via AWS or Other Cloud Services for SAAS
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: pos_nginx_prod
+    ports:
+      - "80:80"
+      - "443:443" # Added for SSL
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/ssl:ro # Mount your SSL certificates here
+    depends_on:
+      - dashboard
+      - api
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: pos_postgres_prod
+    restart: always
+    environment:
+      # NEVER hardcode passwords in prod; use a .env file
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 1gb # Enterprise tip: prevent one container from crashing the host
+
+  api:
+    build:
+      context: ../../apps/api # Adjusted path to find the app code
+      dockerfile: Dockerfile
+    container_name: pos_api_prod
+    restart: always
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      - postgres
+      - redis
+
+  dashboard:
+    build:
+      context: ../../apps/dashboard
+      dockerfile: Dockerfile
+    container_name: pos_dashboard_prod
+    restart: always
+    env_file:
+      - .env.prod
+    depends_on:
+      - api
+
+  minio:
+    image: minio/minio:latest
+    container_name: pos_minio_prod
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    # In prod, we usually don't expose 9000/9001 to the public web
+    # Nginx should proxy these via a subdomain (e.g., s3.yourdomain.com)
+    volumes:
+      - minio_prod_data:/data
+
+  # Redis & ChromaDB usually don't need ports exposed in prod 
+  # as long as they are on the same docker network.
+  redis:
+    image: redis:7-alpine
+    container_name: pos_redis_prod
+    restart: always
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: pos_chromadb_prod
+    restart: always
+    volumes:
+      - chroma_prod_data:/chroma
+
+volumes:
+  postgres_prod_data:
+  chroma_prod_data:
+  minio_prod_data:

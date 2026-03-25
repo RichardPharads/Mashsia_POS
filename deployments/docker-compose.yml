@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: pos_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - dashboard
+      - api
+      - minio
+  postgres:
+    image: postgres:16-alpine
+    container_name: pos_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pos
+      POSTGRES_PASSWORD: pospassword
+      POSTGRES_DB: posdb
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: pos_redis
+    restart: unless-stopped
+
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: pos_api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+    env_file:
+      - ../apps/api/.env
+    environment:
+      DATABASE_URL: postgres://pos:pospassword@postgres:5432/posdb
+      REDIS_URL: redis://redis:6379
+
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    container_name: pos_dashboard
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - ../apps/dashboard/.env
+    environment:
+      API_URL: http://api:3000
+
+
+  
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: pos_chromadb
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma
+
+  minio:
+    image: minio/minio:latest
+    container_name: pos_minio
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: posminio
+      MINIO_ROOT_PASSWORD: posminiopassword
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  postgres_data:
+  chroma_data:
+  minio_data:
