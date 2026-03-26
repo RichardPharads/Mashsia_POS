@@ -32,7 +32,7 @@ services:
 
   api:
     build:
-      context: ./apps/api
+      context: ../apps/api
       dockerfile: Dockerfile
     container_name: pos_api
     restart: unless-stopped
@@ -48,7 +48,7 @@ services:
 
   dashboard:
     build:
-      context: ./apps/dashboard
+      context: ../apps/dashboard
       dockerfile: Dockerfile
     container_name: pos_dashboard
     restart: unless-stopped
