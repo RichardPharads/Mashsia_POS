@@ -1,26 +1,3 @@
-# ---------- Base image ----------
-# FROM node:20-alpine AS deps
-# RUN npm install -g pnpm
-# WORKDIR /app
-# COPY package.json pnpm-lock.yaml ./
-# RUN pnpm install --frozen-lockfile
-
-# FROM node:20-alpine AS builder
-# RUN npm install -g pnpm
-# WORKDIR /app
-# COPY --from=deps /app/node_modules ./node_modules
-# COPY . .
-# RUN pnpm build          # ← THIS compiles TypeScript to dist/
-
-# FROM node:20-alpine AS runner
-# WORKDIR /app
-# COPY --from=builder /app/dist ./dist
-# COPY --from=builder /app/node_modules ./node_modules
-# COPY --from=builder /app/package.json ./
-# ENV NODE_ENV=production
-# EXPOSE 3000
-# CMD ["node", "dist/src/server.js"]
-
 FROM node:20-alpine
 
 RUN npm install -g pnpm
@@ -32,6 +9,16 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
+# Build TypeScript
+RUN pnpm build
+
+# Run migrations during build (requires database to be running)
+# You'll need a build-time database connection
+# Alternative: Run migrations at startup
 EXPOSE 3000
 
-CMD ["npx", "tsx", "src/server.ts"]
+# Use a startup script that runs migrations before starting the app
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["node", "dist/server.js"]

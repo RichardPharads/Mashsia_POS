@@ -5,6 +5,9 @@ export default defineConfig({
   out:     './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    url: process.env.DATABASE_URL! || 'postgres://pos:pospassword@localhost:5432/posdb',
+    ssl: false,
   },
+  // Add this to disable the studio feature
+ 
 })
