@@ -1,0 +1,21 @@
+{
+  "name": "mashsia-pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mashsia Point of Sale System - Monorepo",
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "build": "pnpm -r build",
+    "type-check": "pnpm -r type-check",
+    "clean": "pnpm -r clean",
+    "db:generate": "pnpm --filter @mashsia/api db:generate",
+    "db:push": "pnpm --filter @mashsia/api db:push",
+    "db:migrate": "pnpm --filter @mashsia/api db:migrate",
+    "db:seed": "pnpm --filter @mashsia/api db:seed",
+    "db:reset": "pnpm --filter @mashsia/api db:reset",
+    "db:studio": "pnpm --filter @mashsia/api db:studio"
+  },
+  "keywords": ["pos", "point-of-sale", "monorepo"],
+  "author": "",
+  "license": "ISC"
+}
