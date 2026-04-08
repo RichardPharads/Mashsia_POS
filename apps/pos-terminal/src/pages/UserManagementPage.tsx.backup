@@ -1,0 +1,152 @@
+/**
+ * ═══════════════════════════════════════════════════════════════
+ *  User Management Page - Staff & Cashier Management
+ * ═══════════════════════════════════════════════════════════════
+ */
+
+import { useState, useEffect } from 'react'
+import { User, UserRole } from '../types'
+import { apiService } from '../services/api'
+import UserForm from '../components/UserForm'
+import UserList from '../components/UserList'
+
+export default function UserManagementPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterRole, setFilterRole] = useState<UserRole | 'all'>('all')
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  const loadUsers = async () => {
+    setIsLoading(true)
+    try {
+      const data = await apiService.getUsers()
+      setUsers(data)
+    } catch (error) {
+      console.error('Failed to load users:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCreateUser = async (userData: Partial<User>) => {
+    try {
+      await apiService.createUser(userData)
+      loadUsers()
+      setShowForm(false)
+    } catch (error) {
+      console.error('Failed to create user:', error)
+    }
+  }
+
+  const handleUpdateUser = async (userId: string, userData: Partial<User>) => {
+    try {
+      await apiService.updateUser(userId, userData)
+      loadUsers()
+      setEditingUser(null)
+    } catch (error) {
+      console.error('Failed to update user:', error)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string) => {
+    if (confirm('Are you sure you want to deactivate this user?')) {
+      try {
+        await apiService.deleteUser(userId)
+        loadUsers()
+      } catch (error) {
+        console.error('Failed to delete user:', error)
+      }
+    }
+  }
+
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesRole = filterRole === 'all' || user.role === filterRole
+    return matchesSearch && matchesRole
+  })
+
+  return (
+    <div className="w-full h-lvh bg-slate-900 flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-white">User Management</h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium"
+          >
+            + Add User
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          />
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value as any)}
+            className="px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            <option value="all">All Roles</option>
+            <option value="owner">Owner</option>
+            <option value="manager">Manager</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="cashier">Cashier</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 overflow-auto">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full border-4 border-slate-600 border-t-blue-500 animate-spin mx-auto mb-3" />
+              <p className="text-slate-400">Loading users...</p>
+            </div>
+          </div>
+        ) : (
+          <UserList
+            users={filteredUsers}
+            onEdit={setEditingUser}
+            onDelete={handleDeleteUser}
+          />
+        )}
+      </div>
+
+      {/* User Form Modal */}
+      {(showForm || editingUser) && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <UserForm
+            user={editingUser}
+            onSubmit={async (data: Partial<User>) => {
+              if (editingUser) {
+                await handleUpdateUser(editingUser.id, data)
+              } else {
+                await handleCreateUser(data)
+              }
+            }}
+            onClose={() => {
+              setShowForm(false)
+              setEditingUser(null)
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}

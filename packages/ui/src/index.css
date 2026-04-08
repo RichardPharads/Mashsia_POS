@@ -24,6 +24,15 @@
       "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
       "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
       "Noto Color Emoji";
+    
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 3.6%;
+    --sidebar-primary: 0 0% 9.1%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 91%;
+    --sidebar-accent-foreground: 0 0% 9.1%;
+    --sidebar-border: 0 0% 89.8%;
+    --sidebar-ring: 0 0% 3.6%;
   }
 
   .dark {
@@ -42,6 +51,15 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+    
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 98.2%;
+    --sidebar-primary: 0 0% 98.2%;
+    --sidebar-primary-foreground: 0 0% 9.1%;
+    --sidebar-accent: 0 0% 14.9%;
+    --sidebar-accent-foreground: 0 0% 98.2%;
+    --sidebar-border: 0 0% 14.9%;
+    --sidebar-ring: 0 0% 83.1%;
   }
 }
 
