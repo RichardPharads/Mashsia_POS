@@ -1,22 +1,15 @@
-/**
- * ═══════════════════════════════════════════════════════════════
- *  Dashboard Page - Main POS Interface
- * ═══════════════════════════════════════════════════════════════
- */
-
-import { useState, useEffect } from 'react'
-import { useAuthStore } from '../store/authStore'
-import { usePOSStore } from '../store/posStore'
-import { apiService } from '../services/api'
-import { AppSidebar } from '../components/App-Sidebar'
-import ProductGrid from '../components/ProductGrid'
-import CartSidebar from '../components/CartSidebar'
-import TopBar from '../components/TopBar'
-import { SidebarProvider, SidebarInset } from '@mashsia/ui'
-import { Product } from '../types'
+import { useEffect, useMemo, useState } from "react";
+import { AppSidebar } from "../components/App-Sidebar";
+import ProductGrid from "../components/ProductGrid";
+import CartSidebar from "../components/CartSidebar";
+import TopBar from "../components/TopBar";
+import { apiService } from "../services/api";
+import { useAuthStore } from "../store/authStore";
+import { usePOSStore } from "../store/posStore";
+import type { Product } from "../types";
 
 export default function DashboardPage() {
-  const { user } = useAuthStore()
+  const { user } = useAuthStore();
   const {
     categories,
     products,
@@ -26,111 +19,156 @@ export default function DashboardPage() {
     setSelectedCategory,
     isLoading,
     setLoading,
-  } = usePOSStore()
+    cart,
+  } = usePOSStore();
 
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
-
-  useEffect(() => {
-    loadInitialData()
-  }, [])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    filterProducts()
-  }, [selectedCategory, products])
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const loadInitialData = async () => {
-    setLoading(true)
+  useEffect(() => {
+    if (!selectedCategory) {
+      setFilteredProducts(products);
+      return;
+    }
+
+    setFilteredProducts(
+      products.filter((product) => product.categoryId === selectedCategory),
+    );
+  }, [products, selectedCategory]);
+
+  const loadData = async () => {
+    setLoading(true);
     try {
-      const [cats, prods] = await Promise.all([
+      const [fetchedCategories, fetchedProducts] = await Promise.all([
         apiService.getCategories(),
         apiService.getProducts(),
-      ])
-      setCategories(cats)
-      setProducts(prods)
+      ]);
+      setCategories(fetchedCategories);
+      setProducts(fetchedProducts);
     } catch (error) {
-      console.error('Failed to load data:', error)
+      console.error("Failed to load dashboard data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const filterProducts = () => {
-    if (!selectedCategory) {
-      setFilteredProducts(products)
-    } else {
-      setFilteredProducts(
-        products.filter((p) => p.categoryId === selectedCategory)
-      )
-    }
-  }
+  const metrics = useMemo(() => {
+    const totalStock = products.reduce(
+      (sum, product) => sum + (product.stockQuantity ?? 0),
+      0,
+    );
+    const cartItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    return {
+      totalProducts: products.length,
+      totalStock,
+      cartItems,
+    };
+  }, [products, cart]);
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <AppSidebar />
-      <SidebarInset className="bg-slate-900 flex flex-col overflow-hidden p-0 h-screen">
-        {/* Fixed Top Bar */}
-        <div className=" z-40">
+    <div className="min-h-screen bg-slate-900 text-slate-100">
+      <div className="flex h-screen">
+        <AppSidebar />
+        <div className="flex flex-1 flex-col overflow-hidden">
           <TopBar user={user} />
-        </div>
 
-        {/* Main Content - Scrollable */}
-        <div className="flex-1 flex overflow-hidden gap-3 pl-2 ">
-          {/* Products Section with Categories */}
-          <div className="flex-1 flex flex-col overflow-hidden gap-2">
-            {/* Categories Grid - Fixed at top, scrollable below */}
-            <div className="bg-slate-800 rounded-lg border border-slate-700 p-4 ">
-              <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Categories</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {/* All Items Button */}
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`
-                    py-3 px-2 rounded-lg text-xs font-semibold transition-all duration-200 text-center
-                    ${
-                      selectedCategory === null
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
-                    }
-                  `}
-                >
-                  All Items
-                </button>
-
-                {/* Category Buttons */}
-                {categories.slice(0, 7).map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`
-                      py-3 px-2 rounded-lg text-xs font-semibold transition-all duration-200 text-center flex flex-col items-center justify-center gap-1
-                      ${
-                        selectedCategory === category.id
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 ring-2 ring-white'
-                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
-                      }
-                    `}
-                  >
-                    <span className="text-lg">🍵</span>
-                    <span className="line-clamp-1 text-xs">{category.name}</span>
-                  </button>
-                ))}
+          <main className="flex flex-1 gap-4 overflow-hidden px-4 pb-4">
+            <section className="flex flex-1 flex-col gap-4 overflow-hidden mt-2">
+              <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
+                <CategorySelector
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onSelect={setSelectedCategory}
+                />
               </div>
-            </div>
 
-            {/* Products Grid - Scrollable Main Section */}
-            <ProductGrid
-              products={filteredProducts}
-              isLoading={isLoading}
-            />
-          </div>
+              <div className="flex flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/70">
+                <ProductGrid
+                  products={filteredProducts}
+                  isLoading={isLoading}
+                />
+              </div>
+            </section>
 
-          {/* Fixed Right Cart Sidebar */}
-          <div className="">
-            <CartSidebar />
-          </div>
+            <aside className="hidden w-80 shrink-0 lg:block">
+              <CartSidebar />
+            </aside>
+          </main>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
-  )
+      </div>
+    </div>
+  );
 }
 
+type MetricProps = {
+  label: string;
+  value: string;
+};
+
+function Metric({ label, value }: MetricProps) {
+  return (
+    <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3">
+      <p className="text-sm text-slate-300">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+type CategorySelectorProps = {
+  categories: Array<{ id: string; name: string }>;
+  selectedCategory: string | null;
+  onSelect: (value: string | null) => void;
+};
+
+function CategorySelector({
+  categories,
+  selectedCategory,
+  onSelect,
+}: CategorySelectorProps) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-slate-200">Categories</h2>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <CategoryButton
+          label="All"
+          active={selectedCategory === null}
+          onClick={() => onSelect(null)}
+        />
+        {categories.map((category) => (
+          <CategoryButton
+            key={category.id}
+            label={category.name}
+            active={selectedCategory === category.id}
+            onClick={() => onSelect(category.id)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type CategoryButtonProps = {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+};
+
+function CategoryButton({ label, active, onClick }: CategoryButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
+        active
+          ? "border-slate-200 bg-slate-200 text-slate-900"
+          : "border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}

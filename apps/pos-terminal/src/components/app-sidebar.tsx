@@ -1,126 +1,124 @@
-import { useState } from 'react'
-import { useAuthStore } from '../store/authStore'
+import { useState, type ReactElement } from "react";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-} from "@mashsia/ui"
-import {
-  MdDashboard,
-  MdShoppingCart,
   MdAnalytics,
+  MdDashboard,
+  MdLogout,
+  MdMenu,
+  MdMenuOpen,
   MdPeople,
   MdSettings,
-  MdLogout,
-  MdKeyboardArrowDown,
-} from 'react-icons/md'
+  MdShoppingCart,
+} from "react-icons/md";
+import { useAuthStore } from "../store/authStore";
+
+type MenuItem = {
+  id: string;
+  label: string;
+  icon: ReactElement;
+};
+
+const MENU_ITEMS: MenuItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: <MdDashboard size={18} /> },
+  { id: "orders", label: "Orders", icon: <MdShoppingCart size={18} /> },
+  { id: "reports", label: "Reports", icon: <MdAnalytics size={18} /> },
+  { id: "staff", label: "Staff", icon: <MdPeople size={18} /> },
+  { id: "settings", label: "Settings", icon: <MdSettings size={18} /> },
+];
 
 export function AppSidebar() {
-  const [openUser, setOpenUser] = useState(false)
-  const { user, logout } = useAuthStore()
-
-  const mainMenuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: MdDashboard },
-    { id: 'orders', label: 'Orders', icon: MdShoppingCart },
-    { id: 'reports', label: 'Reports', icon: MdAnalytics },
-    { id: 'staff', label: 'Staff', icon: MdPeople },
-    { id: 'settings', label: 'Settings', icon: MdSettings },
-  ]
+  const [collapsed, setCollapsed] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, logout } = useAuthStore();
 
   return (
-    <Sidebar className="border-r h-lvh border-slate-800 bg-slate-950">
-      {/* Header - Brand & Logo */}
-      <SidebarHeader className="border-b border-slate-800 from-slate-900 to-slate-950">
-        <div className="flex items-center gap-3 px-2 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg from-blue-500 to-blue-600 text-white font-bold text-lg">
-            M
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-white">Mashsia</h2>
-            <p className="text-xs text-slate-400">POS System</p>
-          </div>
-        </div>
-      </SidebarHeader>
-
-      {/* Main Content - Flex between layout */}
-      <SidebarContent className="bg-slate-950 px-2 py-4 flex flex-col justify-between overflow-hidden flex-1">
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-slate-400 uppercase tracking-wider text-xs font-semibold px-2 mb-3">
-            Navigation
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainMenuItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      className="flex gap-3 px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                      title={item.label}
-                    >
-                      <Icon className="h-5 w-5 text-slate-400" />
-                      <span className="font-medium text-sm">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        {/* Spacer - pushes footer to bottom */}
-        <div className="flex-1" />
-      </SidebarContent>
-
-      {/* Footer - User Profile */}
-      <SidebarFooter className="  bg-slate-900/50 px-2 py-4">
-        <div className="relative">
-          <button
-            onClick={() => setOpenUser(!openUser)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition-colors group"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full  from-slate-600 to-slate-700 text-white font-bold text-sm">
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
-                {user?.name || 'User'}
-              </p>
-              <p className="text-xs text-slate-400 truncate">
-                {user?.email || 'user@example.com'}
-              </p>
-            </div>
-            <MdKeyboardArrowDown className={`h-5 w-5 text-slate-400 transition-transform ${openUser ? 'rotate-180' : ''}`} />
-          </button>
-
-          {/* User Dropdown Menu */}
-          {openUser && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg overflow-hidden z-50">
-              <button className="w-full px-4 py-2 text-left text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-2">
-                <MdSettings className="h-4 w-4" />
-                Profile Settings
-              </button>
-              <button
-                onClick={() => {
-                  logout()
-                  setOpenUser(false)
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-slate-700 hover:text-red-300 transition-colors flex items-center gap-2"
-              >
-                <MdLogout className="h-4 w-4" />
-                Logout
-              </button>
+    <aside
+      className={`flex h-full ${collapsed ? "w-20" : "w-64"} flex-col border-r border-slate-800 bg-slate-900 text-slate-100`}
+    >
+      <header className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
+        <div className="flex place-item-center">
+          {!collapsed && (
+            <div>
+              <h1 className="text-lg font-semibold">Mashsia POS</h1>
+              <p className="text-xs text-slate-400">Point of Sale</p>
             </div>
           )}
         </div>
-      </SidebarFooter>
-    </Sidebar>
-  )
+        <button
+          type="button"
+          onClick={() => {
+            setCollapsed((prev) => !prev);
+            setShowUserMenu(false);
+          }}
+          className="rounded-md border border-slate-700 p-2 text-slate-200 hover:bg-slate-800"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? <MdMenu size={18} /> : <MdMenuOpen size={18} />}
+        </button>
+      </header>
+
+      <nav
+        className={`flex-1 overflow-y-auto ${collapsed ? "px-2" : "px-4"} py-4`}
+      >
+        {!collapsed && (
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Navigation
+          </p>
+        )}
+        <ul className="space-y-1">
+          {MENU_ITEMS.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white ${
+                  collapsed ? "justify-center" : ""
+                }`}
+              >
+                {item.icon}
+                {!collapsed && <span>{item.label}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <footer className="border-t border-slate-800 px-4 py-4">
+        <button
+          type="button"
+          onClick={() => {
+            if (!collapsed) {
+              setShowUserMenu((open) => !open);
+            }
+          }}
+          className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 ${
+            collapsed ? "justify-center" : ""
+          }`}
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold">
+            {user?.name?.charAt(0).toUpperCase() ?? "U"}
+          </div>
+          {!collapsed && (
+            <div className="flex-1 truncate">
+              <p className="truncate">{user?.name ?? "User account"}</p>
+              <p className="truncate text-xs text-slate-400">
+                {user?.email ?? "user@example.com"}
+              </p>
+            </div>
+          )}
+        </button>
+
+        {!collapsed && showUserMenu && (
+          <div className="mt-2 space-y-1 rounded-md border border-slate-800 bg-slate-900 p-2 text-sm">
+            <button
+              type="button"
+              onClick={logout}
+              className="flex w-full items-center gap-2 rounded px-2 py-2 text-red-300 hover:bg-slate-800 hover:text-red-200"
+            >
+              <MdLogout size={16} />
+              Sign out
+            </button>
+          </div>
+        )}
+      </footer>
+    </aside>
+  );
 }

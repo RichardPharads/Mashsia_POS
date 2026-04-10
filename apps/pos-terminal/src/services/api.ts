@@ -4,39 +4,69 @@
  * ═══════════════════════════════════════════════════════════════
  */
 
-import { invoke } from '@tauri-apps/api/core'
-import { User, Product, Category, Order, ApiResponse } from '../types'
+import { invoke } from "@tauri-apps/api/core";
+
+import { User, Product, Category, Order, ApiResponse } from "../types";
+
+const TERMINAL_STORAGE_KEY = "terminal_id";
+
+function getOrCreateTerminalId(): string {
+  const existing = localStorage.getItem(TERMINAL_STORAGE_KEY);
+  if (existing && existing.trim().length > 0) {
+    return existing;
+  }
+
+  const generated =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `pos-${Math.random().toString(36).slice(2, 10)}`;
+
+  localStorage.setItem(TERMINAL_STORAGE_KEY, generated);
+  return generated;
+}
 
 class APIService {
   /**
    * Login with PIN
    * Calls Rust backend via Tauri command
    */
-  async loginWithPIN(pin: string): Promise<{ user: User; session_id: string; terminal_id: string } | null> {
+  async loginWithPIN(
+    pin: string,
+  ): Promise<{ user: User; session_id: string; terminal_id: string } | null> {
     try {
-      console.log('🔐 Starting login with PIN...')
-      const response = await invoke<ApiResponse<{
-        user: User
-        session_id: string
-        terminal_id: string
-        token: string
-      }>>('login_with_pin', { pin })
+      console.log("🔐 Starting login with PIN...");
 
-      console.log('✅ Login response:', response)
+      const terminalId = getOrCreateTerminalId();
+      const response = await invoke<
+        ApiResponse<{
+          user: User;
+
+          session_id: string;
+
+          terminal_id: string;
+
+          token: string;
+        }>
+      >("login_with_pin", {
+        pin,
+        terminal_id: terminalId,
+      });
+
+      console.log("✅ Login response:", response);
 
       if (response.success && response.data) {
-        const { user, token, session_id, terminal_id } = response.data
-        localStorage.setItem('auth_token', token)
-        localStorage.setItem('session_id', session_id)
-        localStorage.setItem('terminal_id', terminal_id)
-        console.log('✅ Login successful:', user)
-        return { user, session_id, terminal_id }
+        const { user, token, session_id, terminal_id } = response.data;
+        localStorage.setItem("auth_token", token);
+        localStorage.setItem("session_id", session_id);
+        localStorage.setItem("terminal_id", terminal_id);
+        console.log("✅ Login successful:", user);
+        return { user, session_id, terminal_id };
       }
-      console.log('❌ Login not successful:', response)
-      return null
+      console.log("❌ Login not successful:", response);
+      return null;
     } catch (error) {
-      console.error('❌ Login error:', error)
-      throw new Error(typeof error === 'string' ? error : 'Failed to login')
+      console.error("❌ Login error:", error);
+      throw new Error(typeof error === "string" ? error : "Failed to login");
     }
   }
 
@@ -45,12 +75,12 @@ class APIService {
    */
   async getCurrentUser(): Promise<User | null> {
     try {
-      const token = localStorage.getItem('auth_token')
-      if (!token) return null
-      return null
+      const token = localStorage.getItem("auth_token");
+      if (!token) return null;
+      return null;
     } catch (error) {
-      console.error('Failed to fetch current user:', error)
-      return null
+      console.error("Failed to fetch current user:", error);
+      return null;
     }
   }
 
@@ -59,11 +89,11 @@ class APIService {
    */
   async logout(): Promise<void> {
     try {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('session_id')
-      localStorage.removeItem('terminal_id')
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("session_id");
+      localStorage.removeItem("terminal_id");
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error("Logout error:", error);
     }
   }
 
@@ -76,11 +106,11 @@ class APIService {
    */
   async getCategories(): Promise<Category[]> {
     try {
-      const response = await invoke<ApiResponse<Category[]>>('get_categories')
-      return response.data || []
+      const response = await invoke<ApiResponse<Category[]>>("get_categories");
+      return response.data || [];
     } catch (error) {
-      console.error('Failed to fetch categories:', error)
-      return []
+      console.error("Failed to fetch categories:", error);
+      return [];
     }
   }
 
@@ -89,13 +119,13 @@ class APIService {
    */
   async getProducts(categoryId?: string): Promise<Product[]> {
     try {
-      const response = await invoke<ApiResponse<Product[]>>('get_products', {
+      const response = await invoke<ApiResponse<Product[]>>("get_products", {
         category_id: categoryId,
-      })
-      return response.data || []
+      });
+      return response.data || [];
     } catch (error) {
-      console.error('Failed to fetch products:', error)
-      return []
+      console.error("Failed to fetch products:", error);
+      return [];
     }
   }
 
@@ -104,14 +134,16 @@ class APIService {
    */
   async getProduct(id: string): Promise<Product | null> {
     try {
-      const response = await invoke<ApiResponse<Product>>('get_product', { id })
+      const response = await invoke<ApiResponse<Product>>("get_product", {
+        id,
+      });
       if (response.success && response.data) {
-        return response.data
+        return response.data;
       }
-      return null
+      return null;
     } catch (error) {
-      console.error('Failed to fetch product:', error)
-      return null
+      console.error("Failed to fetch product:", error);
+      return null;
     }
   }
 
@@ -130,10 +162,10 @@ class APIService {
     subtotal: string,
     vat: string,
     total: string,
-    paymentMethod: string
+    paymentMethod: string,
   ): Promise<{ orderId: string; orderNumber: string; total: string } | null> {
     try {
-      const response = await invoke<ApiResponse<any>>('create_order', {
+      const response = await invoke<ApiResponse<any>>("create_order", {
         session_id: sessionId,
         terminal_id: terminalId,
         cashier_id: cashierId,
@@ -142,15 +174,17 @@ class APIService {
         vat,
         total,
         payment_method: paymentMethod,
-      })
+      });
 
       if (response.success && response.data) {
-        return response.data
+        return response.data;
       }
-      return null
+      return null;
     } catch (error) {
-      console.error('Create order error:', error)
-      throw new Error(typeof error === 'string' ? error : 'Failed to create order')
+      console.error("Create order error:", error);
+      throw new Error(
+        typeof error === "string" ? error : "Failed to create order",
+      );
     }
   }
 
@@ -159,13 +193,13 @@ class APIService {
    */
   async getOrders(sessionId?: string): Promise<Order[]> {
     try {
-      const response = await invoke<ApiResponse<Order[]>>('get_orders', {
+      const response = await invoke<ApiResponse<Order[]>>("get_orders", {
         session_id: sessionId,
-      })
-      return response.data || []
+      });
+      return response.data || [];
     } catch (error) {
-      console.error('Failed to fetch orders:', error)
-      return []
+      console.error("Failed to fetch orders:", error);
+      return [];
     }
   }
 
@@ -176,16 +210,19 @@ class APIService {
   /**
    * Void transaction (manager only)
    */
-  async voidTransaction(sessionId: string, reason: string = ''): Promise<boolean> {
+  async voidTransaction(
+    sessionId: string,
+    reason: string = "",
+  ): Promise<boolean> {
     try {
-      const response = await invoke<ApiResponse<string>>('void_transaction', {
+      const response = await invoke<ApiResponse<string>>("void_transaction", {
         session_id: sessionId,
         reason,
-      })
-      return response.success
+      });
+      return response.success;
     } catch (error) {
-      console.error('Void transaction error:', error)
-      return false
+      console.error("Void transaction error:", error);
+      return false;
     }
   }
 
@@ -194,13 +231,13 @@ class APIService {
    */
   async health(): Promise<boolean> {
     try {
-      const response = await invoke<ApiResponse<string>>('get_health')
-      return response.success
+      const response = await invoke<ApiResponse<string>>("get_health");
+      return response.success;
     } catch (error) {
-      console.error('Health check failed:', error)
-      return false
+      console.error("Health check failed:", error);
+      return false;
     }
   }
 }
 
-export const apiService = new APIService()
+export const apiService = new APIService();

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: String,
     pub name: String,
-    pub email: String,
+    pub email: Option<String>,
     pub role: String,
     pub is_active: bool,
     pub avatar_url: Option<String>,
@@ -38,7 +38,6 @@ pub struct Product {
     pub updated_at: String,
 }
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Category {
@@ -53,7 +52,7 @@ pub struct Category {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct OrderItem {
     pub product_id: String,
     pub quantity: i32,
@@ -77,7 +76,7 @@ pub struct Order {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct LoginResponse {
     pub user: User,
     pub session_id: String,
@@ -86,7 +85,7 @@ pub struct LoginResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "snake_case")]
 pub struct ApiResponse<T> {
     pub success: bool,
     pub data: Option<T>,

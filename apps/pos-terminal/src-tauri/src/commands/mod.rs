@@ -1,13 +1,13 @@
-use crate::models::{ApiResponse, LoginResponse, Category, Product, Order};
-use crate::services::{auth, products, orders};
+use crate::models::{ApiResponse, Category, LoginResponse, Order, Product};
+use crate::services::{auth, orders, products};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH COMMANDS
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[tauri::command]
-pub fn login_with_pin(pin: String) -> ApiResponse<LoginResponse> {
-    match auth::login_with_pin(&pin) {
+pub fn login_with_pin(pin: String, terminal_id: Option<String>) -> ApiResponse<LoginResponse> {
+    match auth::login_with_pin_with_terminal(&pin, terminal_id.as_deref()) {
         Ok(response) => ApiResponse {
             success: true,
             data: Some(response),

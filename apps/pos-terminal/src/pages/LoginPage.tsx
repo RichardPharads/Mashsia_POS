@@ -1,276 +1,153 @@
-/**
- * ═══════════════════════════════════════════════════════════════
- *  PIN Login Component - Modern POS Login Interface
- * ═══════════════════════════════════════════════════════════════
- */
+import { useEffect, useRef, useState } from "react";
+import { apiService } from "../services/api";
+import { useAuthStore } from "../store/authStore";
 
-import { useState, useRef, useEffect } from 'react'
-import { useAuthStore } from '../store/authStore'
-import { apiService } from '../services/api'
+const padPin = (input: string) => input.slice(0, 4).replace(/\D/g, "");
 
-export default function PINLogin() {
-  const [pin, setPin] = useState('')
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [shake, setShake] = useState(false)
-  const pinInputRef = useRef<HTMLInputElement>(null)
+export default function LoginPage() {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { setUser, setSession, setError: setAuthError } = useAuthStore()
+  const { setUser, setSession, setError: setAuthError } = useAuthStore();
 
   useEffect(() => {
-    pinInputRef.current?.focus()
-  }, [])
+    inputRef.current?.focus();
+  }, []);
 
-  const handlePinChange = (value: string) => {
-    if (value.length <= 4 && /^\d*$/.test(value)) {
-      setPin(value)
-      setError('')
-    }
-  }
-
-  const handleNumberClick = (num: string) => {
-    const newPin = pin + num
-    handlePinChange(newPin)
-  }
-
-  const handleClear = () => {
-    setPin('')
-    setError('')
-  }
+  const handleDigit = (digit: string) => {
+    if (isLoading) return;
+    setPin((prev) => padPin(prev + digit));
+    setError(null);
+  };
 
   const handleBackspace = () => {
-    setPin(pin.slice(0, -1))
-  }
+    if (isLoading) return;
+    setPin((prev) => prev.slice(0, -1));
+  };
 
-  const handleLogin = async () => {
+  const handleClear = () => {
+    if (isLoading) return;
+    setPin("");
+    setError(null);
+  };
+
+  const handleSubmit = async () => {
     if (pin.length !== 4) {
-      setError('PIN must be 4 digits')
-      triggerShake()
-      return
+      setError("PIN must be 4 digits.");
+      return;
     }
 
-    setIsLoading(true)
-    setAuthError(undefined)
+    setIsLoading(true);
+    setAuthError(undefined);
 
     try {
-      const result = await apiService.loginWithPIN(pin)
-      if (result) {
-        setUser(result.user)
-        setSession(result.session_id, result.terminal_id)
-        setPin('')
-        setError('')
-      } else {
-        setError('Invalid PIN')
-        triggerShake()
+      const result = await apiService.loginWithPIN(pin);
+      if (!result) {
+        setError("Invalid PIN. Please try again.");
+        return;
       }
-    } catch (err: any) {
-      setError(err.message || 'Login failed')
-      triggerShake()
+
+      setUser(result.user);
+      setSession(result.session_id, result.terminal_id);
+      setPin("");
+    } catch (cause) {
+      const message =
+        cause instanceof Error ? cause.message : "Login failed. Try again.";
+      setError(message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const triggerShake = () => {
-    setShake(true)
-    setTimeout(() => setShake(false), 600)
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleLogin()
-    } else if (e.key === 'Backspace') {
-      handleBackspace()
-    } else if (/^\d$/.test(e.key)) {
-      handleNumberClick(e.key)
-    }
-  }
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") handleSubmit();
+    if (event.key === "Backspace") handleBackspace();
+    if (/^\d$/.test(event.key)) handleDigit(event.key);
+  };
 
   return (
-    <div className="w-full h-lvh bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      {/* Main Container */}
-      <div className="w-full max-w-md">
-        {/* Card */}
-        <div
-          className={`
-            bg-slate-800 rounded-2xl shadow-2xl p-8
-            transition-transform duration-100
-            ${shake ? 'animate-pulse' : ''}
-          `}
-        >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">MASHSIA</h1>
-            <p className="text-slate-400 text-sm uppercase tracking-widest">
-              POS Terminal
-            </p>
-            <div className="mt-4 inline-block px-4 py-1 bg-green-500/20 rounded-full">
-              <p className="text-green-400 text-xs font-semibold">Online</p>
-            </div>
-          </div>
-
-          {/* PIN Display */}
-          <div className="mb-8">
-            <label className="block text-slate-300 text-xs font-semibold uppercase mb-3 tracking-widest">
-              Enter PIN
-            </label>
-            <div
-              className={`
-                relative bg-slate-700 rounded-lg overflow-hidden
-                transition-all duration-200
-              `}
-            >
-              <input
-                ref={pinInputRef}
-                type="password"
-                value={pin}
-                onChange={(e) => handlePinChange(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="••••"
-                maxLength={4}
-                className={`
-                  w-full px-6 py-4 bg-slate-700 text-white text-center
-                  text-3xl font-bold tracking-widest
-                  focus:outline-none transition-all duration-200
-                  placeholder-slate-500
-                  ${error ? 'ring-2 ring-red-500' : 'ring-1 ring-slate-600'}
-                `}
-              />
-              {/* Security indicator dots */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="flex gap-3">
-                  {[0, 1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className={`
-                        w-3 h-3 rounded-full transition-all duration-200
-                        ${
-                          i < pin.length
-                            ? 'bg-blue-400 shadow-lg shadow-blue-400/50'
-                            : 'bg-slate-600'
-                        }
-                      `}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mt-3 p-3 bg-red-500/20 rounded-lg border border-red-500/30">
-                <p className="text-red-400 text-sm font-medium">{error}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Numberpad */}
-          <div className="mb-8">
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                <button
-                  key={num}
-                  onClick={() => handleNumberClick(num.toString())}
-                  disabled={isLoading}
-                  className={`
-                    py-4 rounded-lg font-bold text-lg
-                    transition-all duration-150 transform
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    ${
-                      pin.length === 4
-                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-slate-700 text-white hover:bg-slate-600 active:scale-95'
-                    }
-                  `}
-                >
-                  {num}
-                </button>
-              ))}
-              <button
-                onClick={handleClear}
-                disabled={isLoading || pin.length === 0}
-                className={`
-                  py-4 rounded-lg font-bold text-sm
-                  transition-all duration-150 transform
-                  col-span-1 disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    pin.length === 0
-                      ? 'bg-slate-700 text-slate-400'
-                      : 'bg-red-500/20 text-red-400 hover:bg-red-500/30 active:scale-95'
-                  }
-                `}
-              >
-                Clear
-              </button>
-              <button
-                onClick={() => handleNumberClick('0')}
-                disabled={isLoading}
-                className={`
-                  py-4 rounded-lg font-bold text-lg col-span-1
-                  transition-all duration-150 transform
-                  disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    pin.length === 4
-                      ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                      : 'bg-slate-700 text-white hover:bg-slate-600 active:scale-95'
-                  }
-                `}
-              >
-                0
-              </button>
-              <button
-                onClick={handleBackspace}
-                disabled={isLoading || pin.length === 0}
-                className={`
-                  py-4 rounded-lg font-bold text-sm
-                  transition-all duration-150 transform
-                  col-span-1 disabled:opacity-50 disabled:cursor-not-allowed
-                  ${
-                    pin.length === 0
-                      ? 'bg-slate-700 text-slate-400'
-                      : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 active:scale-95'
-                  }
-                `}
-              >
-                ← Back
-              </button>
-            </div>
-          </div>
-
-          {/* Login Button */}
-          <button
-            onClick={handleLogin}
-            disabled={isLoading || pin.length !== 4}
-            className={`
-              w-full py-4 rounded-lg font-bold text-lg
-              transition-all duration-200 transform
-              uppercase tracking-wider
-              disabled:opacity-50 disabled:cursor-not-allowed
-              ${
-                pin.length === 4 && !isLoading
-                  ? 'bg-linear-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg hover:shadow-blue-500/50 active:scale-95'
-                  : 'bg-slate-700 text-slate-400'
-              }
-            `}
-          >
-            {isLoading ? '🔄 Logging in...' : 'Login'}
-          </button>
-
-          {/* Footer Info */}
-          <div className="mt-6 pt-6 border-t border-slate-700 text-center">
-            <p className="text-slate-500 text-xs">
-              🔒 Secure PIN Entry • Keyboard Support
-            </p>
-          </div>
-        </div>
-
-        {/* Terminal ID Display */}
-        <div className="mt-6 text-center">
-          <p className="text-slate-500 text-xs">
-            Terminal: <span className="text-slate-400 font-mono">POS-001</span>
+    <div className="flex min-h-screen items-center justify-center bg-slate-900 px-4">
+      <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg">
+        <header className="mb-6 text-center">
+          <h1 className="text-2xl font-semibold text-white">Mashsia POS</h1>
+          <p className="mt-2 text-sm text-slate-300">
+            Enter your 4-digit PIN to continue
           </p>
+        </header>
+
+        <div className="mb-6">
+          <label
+            htmlFor="pin-input"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400"
+          >
+            PIN
+          </label>
+          <input
+            id="pin-input"
+            ref={inputRef}
+            type="password"
+            value={pin}
+            maxLength={4}
+            onChange={() => undefined}
+            onKeyDown={handleKeyDown}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-center text-2xl font-semibold text-white tracking-[0.5em] outline-none focus:ring-2 focus:ring-slate-400"
+          />
+          {error && (
+            <p className="mt-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {error}
+            </p>
+          )}
         </div>
+
+        <div className="grid grid-cols-3 gap-3 text-white">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
+            <button
+              key={digit}
+              type="button"
+              onClick={() => handleDigit(digit)}
+              disabled={isLoading}
+              className="h-14 rounded-lg border border-slate-700 bg-slate-900 text-lg font-semibold transition hover:bg-slate-800 disabled:opacity-50"
+            >
+              {digit}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={isLoading || pin.length === 0}
+            className="h-14 rounded-lg border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDigit("0")}
+            disabled={isLoading}
+            className="h-14 rounded-lg border border-slate-700 bg-slate-900 text-lg font-semibold transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            0
+          </button>
+          <button
+            type="button"
+            onClick={handleBackspace}
+            disabled={isLoading || pin.length === 0}
+            className="h-14 rounded-lg border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 disabled:opacity-50"
+          >
+            ←
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isLoading || pin.length !== 4}
+          className="mt-6 w-full rounded-lg bg-slate-200 py-3 text-sm font-semibold text-slate-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isLoading ? "Please wait..." : "Login"}
+        </button>
       </div>
     </div>
-  )
+  );
 }

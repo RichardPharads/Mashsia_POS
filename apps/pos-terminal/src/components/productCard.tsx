@@ -1,84 +1,65 @@
-import { Product } from '../types'
-import { useNavigate } from 'react-router-dom'
-import image from '../assets/Stylish Reusable Coffee Cup with Modern Design.jpg'
+import { useNavigate } from "react-router-dom";
+import type { Product } from "../types";
+
 interface ProductCardProps {
-  product: Product
+  product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const isLowStock =
-    Number(product.stockQuantity) <= Number(product.lowStockThreshold)
-  const isOutOfStock = Number(product.stockQuantity) === 0
+  const stockQty = product.stockQuantity ?? 0;
+  const lowStockThreshold = product.lowStockThreshold ?? 10;
 
-  const handleCardClick = () => {
+  const isOutOfStock = stockQty <= 0;
+  const isLowStock = !isOutOfStock && stockQty <= lowStockThreshold;
+
+  const handleClick = () => {
     if (!isOutOfStock) {
-      navigate(`/product/${product.id}`)
+      navigate(`/product/${product.id}`);
     }
-  }
+  };
 
   return (
-    <div
-      onClick={handleCardClick}
-      className={`
-        relative group overflow-hidden rounded-2xl 
-        transition-all duration-300 
-        cursor-pointer w-45 h-45
-        
-        ${isOutOfStock
-          ? 'opacity-40 cursor-not-allowed'
-          : 'hover:scale-[1.03] hover:shadow-xl'}
-      `}
-      style={{
-        backgroundColor: '#2A2A2A',
-      }}
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={isOutOfStock}
+      className={`w-full rounded-lg border border-slate-800 bg-slate-900/80 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60`}
     >
-      {/* Background Overlay */}
-      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
-
-      {/* Product Image */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <img
-          src={image}
-          alt={product.name}
-          className="h-full object-contain drop-shadow-xl brightness-50 opacity-50"
-        />
+      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-xl">
+        {product.name?.charAt(0).toUpperCase() ?? "P"}
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col justify-between h-full p-4">
-        {/* Top */}
-        <div>
-          <h3 className="text-white text-lg font-semibold leading-tight">
-            {product.name}
-          </h3>
-        </div>
-
-        {/* Bottom */}
-        <div>
-          <p className="text-gray-300 text-sm line-through opacity-70">
-            ₱{(parseFloat(product.price) * 1.2).toFixed(2)}
-          </p>
-          <p className="text-white text-lg font-bold">
-            ₱{parseFloat(product.price).toFixed(2)}
-          </p>
-        </div>
+      <div className="mt-4 space-y-2">
+        <p className="text-sm font-semibold text-white line-clamp-2">
+          {product.name}
+        </p>
+        <p className="text-xs text-slate-300 line-clamp-3">
+          {product.description ?? "POS menu item"}
+        </p>
       </div>
 
-      {/* Low Stock Badge */}
-      {isLowStock && !isOutOfStock && (
-        <div className="absolute top-2 right-2 bg-yellow-500 text-black text-[10px] px-2 py-1 rounded-md font-semibold">
-          LOW
-        </div>
-      )}
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-lg font-bold text-white">
+          ₱{parseFloat(product.price ?? "0").toFixed(2)}
+        </span>
+        <span className="text-xs text-slate-400">
+          Stock: {stockQty.toString()}
+        </span>
+      </div>
 
-      {/* Out of Stock */}
       {isOutOfStock && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-sm font-bold">
-          OUT OF STOCK
-        </div>
+        <p className="mt-3 rounded bg-red-500/20 px-2 py-1 text-xs font-medium text-red-300">
+          Out of stock
+        </p>
       )}
-    </div>
-  )
+
+      {isLowStock && !isOutOfStock && (
+        <p className="mt-3 rounded bg-amber-500/20 px-2 py-1 text-xs font-medium text-amber-200">
+          Low stock
+        </p>
+      )}
+    </button>
+  );
 }
