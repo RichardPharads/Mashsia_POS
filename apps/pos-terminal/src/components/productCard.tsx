@@ -10,7 +10,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const stockQty = product.stockQuantity ?? 0;
   const lowStockThreshold = product.lowStockThreshold ?? 10;
-
   const isOutOfStock = stockQty <= 0;
   const isLowStock = !isOutOfStock && stockQty <= lowStockThreshold;
 
@@ -25,9 +24,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       type="button"
       onClick={handleClick}
       disabled={isOutOfStock}
-      className={`w-full rounded-lg border border-slate-800 bg-slate-900/80 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60`}
+      className={`w-full h-full rounded-lg border border-slate-800 bg-slate-900/80 p-4 text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60`}
     >
-      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-slate-800 text-xl">
+      <div className="flex h-12 w-12 items-center  justify-center rounded-md bg-slate-800 text-xl">
         {product.name?.charAt(0).toUpperCase() ?? "P"}
       </div>
 
@@ -35,7 +34,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-sm font-semibold text-white line-clamp-2">
           {product.name}
         </p>
-        <p className="text-xs text-slate-300 line-clamp-3">
+        <p className="text-xs text-slate-300 line-clamp-3 ">
           {product.description ?? "POS menu item"}
         </p>
       </div>

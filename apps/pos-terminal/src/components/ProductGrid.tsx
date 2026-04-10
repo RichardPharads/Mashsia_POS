@@ -46,7 +46,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
   return (
     <div className="flex-1 w-full bg-neutral-950 rounded-lg border border-slate-700 overflow-y-auto p-3">
       <div
-        className="grid grid-cols-4 gap-4"
+        className="grid gap-4 sm:grid-cols-2  lg:grid-cols-3 xl:grid-cols-4 "
         // ensure each grid row is equally sized; each cell will stretch to same height
         style={{ gridAutoRows: "1fr" }}
         role="list"
@@ -54,7 +54,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, isLoading }) => {
       >
         {products.map((product) => (
           // wrapper forces direct child to fill available height
-          <div key={product.id} role="listitem" className="h-full [&>*]:h-full">
+          <div key={product.id} role="listitem" className="h-full ">
             <ProductCard product={product} />
           </div>
         ))}

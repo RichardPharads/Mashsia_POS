@@ -10,6 +10,7 @@ import {
   MdShoppingCart,
 } from "react-icons/md";
 import { useAuthStore } from "../store/authStore";
+import { Link } from "react-router-dom";
 
 type MenuItem = {
   id: string;
@@ -32,7 +33,7 @@ export function AppSidebar() {
 
   return (
     <aside
-      className={`flex h-full ${collapsed ? "w-20" : "w-64"} flex-col border-r border-slate-800 bg-slate-900 text-slate-100`}
+      className={`flex h-full  ${collapsed ? "w-20" : "w-64"} flex-col border-r border-slate-800 bg-slate-900 text-slate-100`}
     >
       <header className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
         <div className="flex place-item-center">
@@ -67,15 +68,17 @@ export function AppSidebar() {
         <ul className="space-y-1">
           {MENU_ITEMS.map((item) => (
             <li key={item.id}>
-              <button
-                type="button"
-                className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white ${
-                  collapsed ? "justify-center" : ""
-                }`}
-              >
-                {item.icon}
-                {!collapsed && <span>{item.label}</span>}
-              </button>
+              <Link to={`/${item.label.toLowerCase()}`}>
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white ${
+                    collapsed ? "justify-center" : ""
+                  }`}
+                >
+                  {item.icon}
+                  {!collapsed && <span>{item.label}</span>}
+                </button>
+              </Link>
             </li>
           ))}
         </ul>

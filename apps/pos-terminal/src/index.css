@@ -1,1 +1,27 @@
 @import "tailwindcss";
+.scroll-y-custom {
+    /* Firefox: thin scrollbar and colors (thumb, track) */
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 #0b1220; /* thumb, track */
+}
+
+/* WebKit / Blink */
+.scroll-y-custom::-webkit-scrollbar {
+    width: 6px; /* narrow */
+    height: 6px;
+}
+
+.scroll-y-custom::-webkit-scrollbar-track {
+    background: #0b1220; /* dark track (similar to slate-900) */
+    border-radius: 999px;
+}
+
+.scroll-y-custom::-webkit-scrollbar-thumb {
+    background-color: #374151; /* slate-700-ish thumb */
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.scroll-y-custom::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563; /* slightly lighter on hover */
+}

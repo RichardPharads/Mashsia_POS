@@ -67,13 +67,13 @@ export default function CartSidebar() {
   };
 
   return (
-    <aside className="flex h-full flex-col border-l border-slate-800 bg-slate-900 text-slate-100">
+    <aside className="flex  h-full flex-col border rounded-md border-slate-800 bg-slate-900 text-slate-100">
       <header className="border-b border-slate-800 px-4 py-3">
         <h2 className="text-lg font-semibold">Current Order</h2>
         <p className="text-sm text-slate-300">{cart.length} item(s)</p>
       </header>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3 scroll-y-custom">
         {cart.length === 0 ? (
           <p className="rounded-md border border-slate-800 bg-slate-900 px-3 py-4 text-sm text-slate-300">
             Your cart is empty. Add products from the menu to get started.

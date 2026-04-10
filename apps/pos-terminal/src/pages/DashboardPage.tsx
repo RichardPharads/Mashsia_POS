@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppSidebar } from "../components/App-Sidebar";
+import { AppSidebar } from "../components/AppSidebar";
 import ProductGrid from "../components/ProductGrid";
 import CartSidebar from "../components/CartSidebar";
-import TopBar from "../components/TopBar";
 import { apiService } from "../services/api";
 import { useAuthStore } from "../store/authStore";
 import { usePOSStore } from "../store/posStore";
@@ -72,12 +71,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <div className="flex h-screen">
-        <AppSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar user={user} />
-
-          <main className="flex flex-1 gap-4 overflow-hidden px-4 pb-4">
-            <section className="flex flex-1 flex-col gap-4 overflow-hidden mt-2">
+          <main className="flex flex-1 gap-4 overflow-hidden px-4 p-4">
+            <section className="flex flex-1 flex-col gap-4 overflow-hidden">
               <div className="rounded-lg border border-slate-800 bg-slate-900/70 p-4">
                 <CategorySelector
                   categories={categories}
@@ -86,11 +82,14 @@ export default function DashboardPage() {
                 />
               </div>
 
+              {/* Product list area: make it vertically scrollable with the custom narrow scrollbar */}
               <div className="flex flex-1 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/70">
-                <ProductGrid
-                  products={filteredProducts}
-                  isLoading={isLoading}
-                />
+                <div className="w-full scroll-y-custom overflow-y-auto p-3">
+                  <ProductGrid
+                    products={filteredProducts}
+                    isLoading={isLoading}
+                  />
+                </div>
               </div>
             </section>
 
